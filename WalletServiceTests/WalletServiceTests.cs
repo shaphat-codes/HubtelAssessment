@@ -1,104 +1,100 @@
-// using Xunit;
-// using Moq;
-// using api.Data;
-// using api.wallet.repository;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Xunit;
+using Moq;
+using api.Data;
+using api.wallet.repository;
+using api.wallet.services;
+using api.auth.models;
+using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 
-// namespace WalletServiceTests
-// {
-//     public class WalletServiceTests
-//     {
-//         private readonly Mock<IWalletRepository> _walletRepositoryMock;
-//         private readonly Mock<AppDbContext> _contextMock;
-//         private readonly Mock<ILogger<WalletService>> _loggerMock;
-//         private readonly WalletService _walletService;
+namespace WalletServiceTests
+{
+    public class WalletServiceTests
+    {
+        private readonly Mock<IWalletRepository> _walletRepositoryMock;
+        private readonly WalletService _walletService;
+        private readonly AppDbContext _dbContext;
 
-//         public WalletServiceTests()
-//         {
-//             _walletRepositoryMock = new Mock<IWalletRepository>();
-//             _contextMock = new Mock<AppDbContext>();
-//             _loggerMock = new Mock<ILogger<WalletService>>();
-//             _walletService = new WalletService(_walletRepositoryMock.Object, _contextMock.Object, _loggerMock.Object);
-//         }
+        public WalletServiceTests()
+        {
+            var options = new DbContextOptionsBuilder<AppDbContext>()
+                .UseInMemoryDatabase(databaseName: "TestDatabase")
+                .Options;
+            _dbContext = new AppDbContext(options);
 
-//         [Fact]
-//         public async Task GetWalletByIdAsync_WalletExists_ReturnsWallet()
-//         {
-//             // Arrange
-//             var walletId = Guid.NewGuid();
-//             var wallet = new Wallet { ID = walletId, AccountNumber = "1234567890123456", Owner = "1234567890" };
-//             _walletRepositoryMock.Setup(repo => repo.GetWalletByIdAsync(walletId)).ReturnsAsync(wallet);
+            _walletRepositoryMock = new Mock<IWalletRepository>();
+            var loggerMock = new Mock<ILogger<WalletService>>();
+            _walletService = new WalletService(_walletRepositoryMock.Object, _dbContext, loggerMock.Object);
+        }
 
-//             // Act
-//             var result = await _walletService.GetWalletByIdAsync(walletId);
+        [Fact]
+        public async Task GetWalletByIdAsync_WalletExists_ReturnsWallet()
+        {
+            var walletId = Guid.NewGuid();
+            var wallet = new Wallet { ID = walletId, AccountNumber = "1234567890123456", Owner = "1234567890" };
+            _walletRepositoryMock.Setup(repo => repo.GetWalletByIdAsync(walletId)).ReturnsAsync(wallet);
 
-//             // Assert
-//             Assert.NotNull(result);
-//             Assert.Equal(walletId, result.ID);
-//         }
+            var result = await _walletService.GetWalletByIdAsync(walletId);
 
-//         [Fact]
-//         public async Task GetWalletByIdAsync_WalletDoesNotExist_ThrowsKeyNotFoundException()
-//         {
-//             // Arrange
-//             var walletId = Guid.NewGuid();
-//             _walletRepositoryMock.Setup(repo => repo.GetWalletByIdAsync(walletId)).ReturnsAsync((Wallet)null);
+            Assert.NotNull(result);
+            Assert.Equal(walletId, result.ID);
+        }
 
-//             // Act & Assert
-//             await Assert.ThrowsAsync<KeyNotFoundException>(() => _walletService.GetWalletByIdAsync(walletId));
-//         }
+        [Fact]
+        public async Task GetWalletByIdAsync_WalletDoesNotExist_ThrowsKeyNotFoundException()
+        {
+            var walletId = Guid.NewGuid();
+            _walletRepositoryMock.Setup(repo => repo.GetWalletByIdAsync(walletId)).ReturnsAsync((Wallet)null);
 
-//         [Fact]
-//         public async Task AddWalletAsync_ValidWallet_AddsWallet()
-//         {
-//             // Arrange
-//             var wallet = new Wallet { ID = Guid.NewGuid(), Owner = "1234567890", Type = WalletType.Momo, AccountNumber = "1234567890123456" };
-//             var user = new User { PhoneNumber = "1234567890" };
-//             _walletRepositoryMock.Setup(repo => repo.WalletExistsAsync(wallet.AccountNumber)).ReturnsAsync(false);
-//             _walletRepositoryMock.Setup(repo => repo.GetUserWalletCountAsync(wallet.Owner)).ReturnsAsync(0);
-//             _contextMock.Setup(context => context.Users.FindAsync(wallet.Owner)).ReturnsAsync(user);
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _walletService.GetWalletByIdAsync(walletId));
+        }
 
-//             // Act
-//             await _walletService.AddWalletAsync(wallet);
+        [Fact]
+        public async Task AddWalletAsync_ValidWallet_AddsWallet()
+        {
+            var wallet = new Wallet { ID = Guid.NewGuid(), Owner = "1234567890", Type = WalletType.Momo, AccountNumber = "1234567890123456" };
+            var user = new User { PhoneNumber = "1234567890", FirstName = "John", LastName = "Doe" };
+            _walletRepositoryMock.Setup(repo => repo.WalletExistsAsync(wallet.AccountNumber)).ReturnsAsync(false);
+            _walletRepositoryMock.Setup(repo => repo.GetUserWalletCountAsync(wallet.Owner)).ReturnsAsync(0);
+            _dbContext.Users.Add(user);
+            await _dbContext.SaveChangesAsync();
 
-//             // Assert
-//             _walletRepositoryMock.Verify(repo => repo.AddWalletAsync(wallet), Times.Once);
-//         }
+            await _walletService.AddWalletAsync(wallet);
 
-//         [Fact]
-//         public async Task AddWalletAsync_DuplicateWallet_ThrowsInvalidOperationException()
-//         {
-//             // Arrange
-//             var wallet = new Wallet { ID = Guid.NewGuid(), Owner = "1234567890", Type = WalletType.Momo, AccountNumber = "1234567890123456" };
-//             _walletRepositoryMock.Setup(repo => repo.WalletExistsAsync(wallet.AccountNumber)).ReturnsAsync(true);
+            _walletRepositoryMock.Verify(repo => repo.AddWalletAsync(wallet), Times.Once);
+        }
 
-//             // Act & Assert
-//             await Assert.ThrowsAsync<InvalidOperationException>(() => _walletService.AddWalletAsync(wallet));
-//         }
+        [Fact]
+        public async Task AddWalletAsync_DuplicateWallet_ThrowsInvalidOperationException()
+        {
+            var wallet = new Wallet { ID = Guid.NewGuid(), Owner = "1234567890", Type = WalletType.Momo, AccountNumber = "1234567890123456" };
+            _walletRepositoryMock.Setup(repo => repo.WalletExistsAsync(wallet.AccountNumber)).ReturnsAsync(true);
 
-//         [Fact]
-//         public async Task DeleteWalletAsync_WalletExists_DeletesWallet()
-//         {
-//             // Arrange
-//             var walletId = Guid.NewGuid();
-//             var wallet = new Wallet { ID = walletId };
-//             _walletRepositoryMock.Setup(repo => repo.GetWalletByIdAsync(walletId)).ReturnsAsync(wallet);
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _walletService.AddWalletAsync(wallet));
+        }
 
-//             // Act
-//             await _walletService.DeleteWalletAsync(walletId);
+        [Fact]
+        public async Task DeleteWalletAsync_WalletExists_DeletesWallet()
+        {
+            var walletId = Guid.NewGuid();
+            var wallet = new Wallet { ID = walletId, AccountNumber = "1234567890123456", Owner = "1234567890" };
+            _walletRepositoryMock.Setup(repo => repo.GetWalletByIdAsync(walletId)).ReturnsAsync(wallet);
 
-//             // Assert
-//             _walletRepositoryMock.Verify(repo => repo.DeleteWalletAsync(walletId), Times.Once);
-//         }
+            await _walletService.DeleteWalletAsync(walletId);
 
-//         [Fact]
-//         public async Task DeleteWalletAsync_WalletDoesNotExist_ThrowsKeyNotFoundException()
-//         {
-//             // Arrange
-//             var walletId = Guid.NewGuid();
-//             _walletRepositoryMock.Setup(repo => repo.GetWalletByIdAsync(walletId)).ReturnsAsync((Wallet)null);
+            _walletRepositoryMock.Verify(repo => repo.DeleteWalletAsync(walletId), Times.Once);
+        }
 
-//             // Act & Assert
-//             await Assert.ThrowsAsync<KeyNotFoundException>(() => _walletService.DeleteWalletAsync(walletId));
-//         }
-//     }
-// }
+        [Fact]
+        public async Task DeleteWalletAsync_WalletDoesNotExist_ThrowsKeyNotFoundException()
+        {
+            var walletId = Guid.NewGuid();
+            _walletRepositoryMock.Setup(repo => repo.GetWalletByIdAsync(walletId)).ReturnsAsync((Wallet)null);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _walletService.DeleteWalletAsync(walletId));
+        }
+    }
+}
