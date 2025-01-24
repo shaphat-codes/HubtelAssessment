@@ -23,8 +23,8 @@ public class Wallet
     public WalletType Type { get; set; }
     public required string AccountNumber { get; set; }
     public AccountScheme Scheme { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     [Required]
     public required string Owner { get; set; }

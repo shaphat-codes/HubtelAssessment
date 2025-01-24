@@ -25,6 +25,15 @@ namespace api.wallet.controllers
         {
             try
             {
+                var phoneNumber = User.FindFirstValue(ClaimTypes.Name);
+                if (string.IsNullOrEmpty(phoneNumber))
+                {
+                    var errorResponse = new ApiResponse<string>(false, "User phone number not found in token", null);
+                    return BadRequest(errorResponse);
+                }
+
+                wallet.Owner = phoneNumber;
+
                 await _walletService.AddWalletAsync(wallet);
                 var response = new ApiResponse<Wallet>(true, "Wallet created successfully", wallet);
                 return Ok(response);

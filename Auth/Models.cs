@@ -13,7 +13,7 @@ namespace api.auth.models
         public string? Otp { get; set; }
         public DateTime OtpExpiration { get; set; }
         public bool IsOtpVerified { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
 }
