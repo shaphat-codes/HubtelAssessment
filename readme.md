@@ -1,7 +1,7 @@
-# Your Project Name
+# Hubtel wallet manager
 
 ## Description
-A brief description of your project.
+An API service to be used to manage a user's wallet on the Hubtel app   
 
 ## Prerequisites
 - [.NET SDK](https://dotnet.microsoft.com/download) (version 8.0 or later)
@@ -19,8 +19,8 @@ A brief description of your project.
 3. **Set up DB**
     ```dotnet ef database update```
 
-4. **Run the project**
-    ```dotnet run```
-
-5. **Run tests**
+4. **Run tests**
     ```dotnet test```
+
+5. **Run the project**
+    ```dotnet run```
