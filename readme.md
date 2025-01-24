@@ -5,7 +5,7 @@ An API service to be used to manage a user's wallet on the Hubtel app
 
 ## Prerequisites
 - [.NET SDK](https://dotnet.microsoft.com/download) (version 8.0 or later)
-- [SQLite](https://www.sqlite.org/download.html) (if using SQLite)
+- [SQLite](https://www.sqlite.org/download.html)
 
 ## Setup Instructions
 
