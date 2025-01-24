@@ -14,10 +14,11 @@ namespace api.wallet.repository
         Task DeleteWalletAsync(Guid id);
         Task<bool> WalletExistsAsync(string accountNumber);
         Task<int> GetUserWalletCountAsync(string owner);
+        Task<IEnumerable<Wallet>> GetWalletsByUserAsync(string phoneNumber);
     }
 
 
-     public class WalletRepository : IWalletRepository
+    public class WalletRepository : IWalletRepository
     {
         private readonly AppDbContext _context;
 
@@ -39,6 +40,11 @@ namespace api.wallet.repository
         public async Task<IEnumerable<Wallet>> GetAllWalletsAsync()
         {
             return await _context.Wallets.ToListAsync();
+        }
+
+        public async Task<IEnumerable<Wallet>> GetWalletsByUserAsync(string phoneNumber)
+        {
+            return await _context.Wallets.Where(w => w.Owner == phoneNumber).ToListAsync();
         }
 
         public async Task AddWalletAsync(Wallet wallet)

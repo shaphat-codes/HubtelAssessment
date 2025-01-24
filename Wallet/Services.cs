@@ -6,7 +6,7 @@ namespace api.wallet.services
     public interface IWalletService
     {
         Task<Wallet> GetWalletByIdAsync(Guid id);
-        Task<IEnumerable<Wallet>> GetAllWalletsAsync();
+        Task<IEnumerable<Wallet>> GetAllWalletsAsync(string phoneNumber);
         Task AddWalletAsync(Wallet wallet);
         Task DeleteWalletAsync(Guid id);
     }
@@ -37,10 +37,10 @@ namespace api.wallet.services
             return wallet;
         }
 
-        public async Task<IEnumerable<Wallet>> GetAllWalletsAsync()
+        public async Task<IEnumerable<Wallet>> GetAllWalletsAsync(string phoneNumber)
         {
-            _logger.LogInformation("Getting all wallets");
-            return await _walletRepository.GetAllWalletsAsync();
+            _logger.LogInformation("Getting all wallets for user: {PhoneNumber}", phoneNumber);
+            return await _walletRepository.GetWalletsByUserAsync(phoneNumber);
         }
 
         public async Task AddWalletAsync(Wallet wallet)

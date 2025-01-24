@@ -165,7 +165,6 @@ namespace api.auth.services
 
         private string GenerateOtp()
         {
-            // Implement OTP generation logic here
             var random = new Random();
             return random.Next(100000, 999999).ToString();
         }

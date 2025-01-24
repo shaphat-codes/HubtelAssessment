@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using api.wallet.services;
+using System.Security.Claims;
 
 namespace api.wallet.controllers
 {
@@ -70,7 +71,14 @@ namespace api.wallet.controllers
         [HttpGet]
         public async Task<IActionResult> GetAllWallets()
         {
-            var wallets = await _walletService.GetAllWalletsAsync();
+            var phoneNumber = User.FindFirstValue(ClaimTypes.Name);
+            if (string.IsNullOrEmpty(phoneNumber))
+            {
+                var errorResponse = new ApiResponse<string>(false, "User phone number not found in token", null);
+                return BadRequest(errorResponse);
+            }
+
+            var wallets = await _walletService.GetAllWalletsAsync(phoneNumber);
             var response = new ApiResponse<IEnumerable<Wallet>>(true, "Wallets retrieved successfully", wallets);
             return Ok(response);
         }
