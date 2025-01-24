@@ -46,6 +46,13 @@ namespace api.wallet.services
         public async Task AddWalletAsync(Wallet wallet)
         {
             _logger.LogInformation("Adding wallet for owner: {Owner}", wallet.Owner);
+
+            if (!IsValidWalletTypeAndScheme(wallet.Type, wallet.Scheme))
+            {
+                _logger.LogWarning("Invalid wallet type and scheme combination: {Type}, {Scheme}", wallet.Type, wallet.Scheme);
+                throw new InvalidOperationException("Invalid wallet type and scheme combination.");
+            }
+
             if (await _walletRepository.WalletExistsAsync(wallet.AccountNumber))
             {
                 _logger.LogWarning("Duplicate wallet addition attempted for account number: {AccountNumber}", wallet.AccountNumber);
@@ -88,6 +95,16 @@ namespace api.wallet.services
 
             await _walletRepository.DeleteWalletAsync(id);
             _logger.LogInformation("Wallet deleted successfully: {Id}", id);
+        }
+
+        private bool IsValidWalletTypeAndScheme(WalletType type, AccountScheme scheme)
+        {
+            return type switch
+            {
+                WalletType.Momo => scheme == AccountScheme.Mtn || scheme == AccountScheme.Vodafone || scheme == AccountScheme.Airteltigo,
+                WalletType.Card => scheme == AccountScheme.Visa || scheme == AccountScheme.Mastercard,
+                _ => false,
+            };
         }
     }
 }
