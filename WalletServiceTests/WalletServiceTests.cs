@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
 using Xunit;
 using Moq;
 using api.Data;
@@ -59,8 +60,13 @@ namespace WalletServiceTests
             var user = new User { PhoneNumber = "1234567890", FirstName = "John", LastName = "Doe" };
             _walletRepositoryMock.Setup(repo => repo.WalletExistsAsync(wallet.AccountNumber)).ReturnsAsync(false);
             _walletRepositoryMock.Setup(repo => repo.GetUserWalletCountAsync(wallet.Owner)).ReturnsAsync(0);
-            _dbContext.Users.Add(user);
-            await _dbContext.SaveChangesAsync();
+
+            // Check if the user already exists in the context
+            if (!_dbContext.Users.Any(u => u.PhoneNumber == user.PhoneNumber))
+            {
+                _dbContext.Users.Add(user);
+                await _dbContext.SaveChangesAsync();
+            }
 
             await _walletService.AddWalletAsync(wallet);
 
