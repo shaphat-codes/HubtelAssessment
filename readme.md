@@ -11,8 +11,7 @@ A brief description of your project.
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/yourproject.git
-   cd yourproject
+   git clone https://github.com/shaphat-codes/HubtelAssessment.git
 
 2. **Restore dependencies**
     ```dotnet restore```
